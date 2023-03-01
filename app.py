@@ -1,4 +1,4 @@
-from flask import Flask, render_template, Response
+from flask import Flask, render_template, Response, request
 from threading import Thread
 from cpu_load_generator import load_single_core, load_all_cores, from_profile
 
@@ -8,6 +8,7 @@ from time import time, sleep
 import multiprocessing
 from urllib.request import urlopen
 
+from body import Body
 
 app = Flask(__name__, static_url_path='')
 app.secret_key = os.urandom(42)
@@ -59,6 +60,31 @@ def check():
         msg = json.dumps(msg)
         return Response(msg, status=400, mimetype='application/json')
 
+
+@app.route('/api/cpu-load/preset/', methods=['POST'])
+def cpu_load_presset():
+
+    global running_start
+    global running_end
+    global running
+
+    try:
+
+        data = Body.get_body()
+        print(data)
+
+        thread = Thread(target=run_cpu_load_preset, args=(data,))
+        thread.daemon = True
+        thread.start()
+
+        return Response(json.dumps(data), status=200, mimetype='text/javascript')
+
+    except Exception as err:
+        msg = {'erro': err.args[0], 'success': False}
+        if len(err.args) > 1:
+            msg = {'erro': err.args[0], 'data': err.args[1], 'success': False}
+        msg = json.dumps(msg)
+        return Response(msg, status=400, mimetype='application/json')
 
 @app.route('/api/cpu-load/cores/<int:core_num>/perc/<int:perc>/duration/<int:duration>', methods=['GET'])
 @app.route('/api/cpu-load/perc/<int:perc>/duration/<int:duration>', methods=['GET'])
@@ -141,6 +167,38 @@ def run_cpu_load(percent, duration, core_num=-1):
         if core_num != -1:
             load_single_core(core_num=core_num, duration_s=duration, target_load=percent)  # generate load on single core (0)
         else:
+            load_all_cores(duration_s=duration, target_load=percent)
+
+        running = False
+        running_start = 0
+        running_end = 0
+
+        print("End")
+
+    except Exception as err:
+        print(err)
+        raise err
+
+
+def run_cpu_load_preset(preset_data):
+
+    global running_start
+    global running_end
+    global running
+
+    try:
+
+        running = True
+
+        print("Start All")
+
+        for preset in preset_data:
+
+            percent = round(preset['perc']/100, 3)
+            duration = round(preset['time'])
+
+            print("Preset", percent, duration)
+
             load_all_cores(duration_s=duration, target_load=percent)
 
         running = False

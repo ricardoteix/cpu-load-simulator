@@ -23,6 +23,66 @@ onChangePercentual();
 onChangeDuration();
 onChangeCores();
 
+function loadSimulationPreset(callBack = null, check = false) {
+
+    coresValue = document.getElementById("cores").value;
+    percValue = document.getElementById("perc").value;
+    durationValue = document.getElementById("duration").value;
+
+    const loadDataPoints = getLoadsFromPoints(durationValue);
+    const data = JSON.stringify(loadDataPoints);
+
+    var xhr = new XMLHttpRequest();
+    xhr.withCredentials = true;
+
+    xhr.addEventListener("readystatechange", function() {
+      if(this.readyState === 4) {
+        console.log(this.responseText);
+      }
+    });
+
+    xhr.open("POST", "/api/cpu-load/preset/");
+    xhr.setRequestHeader("Content-Type", "application/json");
+
+    xhr.send(data);
+/*
+    var xhr = new XMLHttpRequest();
+    xhr.withCredentials = true;
+
+    xhr.addEventListener("readystatechange", (data) => {
+      if(xhr.readyState === 4) {
+        // console.log(data);
+        responseBody = JSON.parse(xhr.responseText)['body'];
+
+        document.getElementById("cores").value = responseBody['cores'];
+        document.getElementById("perc").value = responseBody['perc'];
+        document.getElementById("duration").value = responseBody['duration'];
+        // console.log("responseBody", responseBody)
+
+        onChangePercentual();
+        onChangeDuration();
+        onChangeCores();
+
+        coresValue = document.getElementById("cores").value;
+        percValue = document.getElementById("perc").value;
+        durationValue = document.getElementById("duration").value;
+        running = responseBody['running'];
+
+        if (callBack) {
+            callBack();
+        }
+      }
+    });
+
+    let url = `/api/cpu-load/perc/${percValue}/duration/${durationValue}`;
+    if (check) {
+        url = `/api/cpu-load/check`;
+    }
+    xhr.open("GET", url);
+
+    xhr.send();
+    */
+}
 
 function loadSimulation(callBack = null, check = false) {
 
@@ -67,6 +127,10 @@ function loadSimulation(callBack = null, check = false) {
 
     xhr.send();
 
+}
+
+function runSimulationPreset() {
+    responseBody = loadSimulationPreset();
 }
 
 function runSimulation() {
