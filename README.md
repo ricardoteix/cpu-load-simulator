@@ -11,8 +11,8 @@ o módulo ``cpu-load-generator``. Este projeto cria uma interface
 web para passar os parâmetros e facilitar a execução da
 simulação de carga.
 
-Além da interface web o projeto gera três para iniciar ou checar o
-a simulação.
+Além da interface web o projeto gera três enpoints para iniciar ou 
+checar a simulação.
 
 # Uso
 
@@ -34,6 +34,23 @@ python app.py
 
 Após isso basta acessar o IP da instância via navegador ou realizar as 
 requisições HTTP.
+
+## Interface Web
+
+A interface web pode ser acessar por meio do IP da 
+máquina na porta 5000. 
+
+Há duas possibilidades de carga pela interface web:
+
+- Simples: gera uma carga contínua, com percentual fixo 
+durante o tempo especificado.
+- Múltipla: gera várias cargas em sequência de acordo com a 
+especificação no gráfico apresentado na interface. 
+
+É possível ver uma imagem da interface no final desta
+página mostra como. Para mover os pontos de controle posicione o 
+cursor no percentual e tempo desejado acima ou abaixo
+de cada ponto e clique na tela.
 
 ## Endpoint cpu-load:
 
@@ -104,3 +121,6 @@ O valor padrão -1 indica que todos os cores serão estressados.
 - duration: qual o tempo total do processo.
 - running: um booleano que indica se o processo ainda está sendo execurado.
 - elapsedTime: quanto tempo se passou desde o início do processo.
+
+# Imagem da Interface
+![Tela do software](https://github.com/ricardoteix/cpu-load-simulator/blob/master/assets/web_interface.jpg?raw=true)
