@@ -23,21 +23,19 @@ num_cores = multiprocessing.cpu_count()
 running = False
 running_start = 0
 running_end = 0
+current_preset_id = -1
 
 
 @app.route('/api/cpu-load/check', methods=['GET'])
 def check():
 
     global running
+    global current_preset_id
 
     try:
         elapsed_time = 0
         if running:
             elapsed_time = round(time()) - running_start
-
-        print('running_start', running_start)
-        print('now', round(time()))
-        print('elapsedTime', elapsed_time)
 
         result = {
             "success": 200,
@@ -47,7 +45,8 @@ def check():
                 "perc": current_perc * 100,
                 "duration": current_duration,
                 "running": running,
-                "elapsedTime": elapsed_time
+                "elapsedTime": elapsed_time,
+                "currentPresetId": current_preset_id
             }
         }
 
@@ -64,6 +63,9 @@ def check():
 @app.route('/api/cpu-load/preset/', methods=['POST'])
 def cpu_load_presset():
 
+    global current_core_num
+    global current_perc
+    global current_duration
     global running_start
     global running_end
     global running
@@ -71,13 +73,33 @@ def cpu_load_presset():
     try:
 
         data = Body.get_body()
-        print(data)
+        preset_data = data['preset']
+        current_duration = int(data['duration'])
+        current_core_num = -1
+        current_perc = -1
 
-        thread = Thread(target=run_cpu_load_preset, args=(data,))
-        thread.daemon = True
-        thread.start()
+        if not running:
+            running = True
+            running_start = round(time())
+            running_end = round((time() + int(current_duration)))
 
-        return Response(json.dumps(data), status=200, mimetype='text/javascript')
+            thread = Thread(target=run_cpu_load_preset, args=(preset_data,))
+            thread.daemon = True
+            thread.start()
+
+        result = {
+            "success": 200,
+            "body": {
+                "cores": current_core_num,
+                "numCores": num_cores,
+                "perc": current_perc,
+                "duration": current_duration,
+                "running": running,
+                "elapsedTime": round(time()) - running_start
+            }
+        }
+
+        return Response(json.dumps(result), status=200, mimetype='text/javascript')
 
     except Exception as err:
         msg = {'erro': err.args[0], 'success': False}
@@ -85,6 +107,7 @@ def cpu_load_presset():
             msg = {'erro': err.args[0], 'data': err.args[1], 'success': False}
         msg = json.dumps(msg)
         return Response(msg, status=400, mimetype='application/json')
+
 
 @app.route('/api/cpu-load/cores/<int:core_num>/perc/<int:perc>/duration/<int:duration>', methods=['GET'])
 @app.route('/api/cpu-load/perc/<int:perc>/duration/<int:duration>', methods=['GET'])
@@ -99,36 +122,22 @@ def cpu_load(perc, duration, core_num=-1):
 
     try:
 
+        elapsed_time = round(time()) - running_start
+
         if not running:
             running = True
             running_start = round(time())
             running_end = round((time() + int(current_duration)))
-
+            elapsed_time = 0
             percent = perc / 100
 
             current_core_num = core_num
             current_perc = percent
             current_duration = duration
 
-            print(core_num, percent, duration)
-
             thread = Thread(target=run_cpu_load, args=(percent, duration, core_num,))
             thread.daemon = True
             thread.start()
-
-            result = {
-                "success": 200,
-                "body": {
-                    "cores": current_core_num,
-                    "numCores": num_cores,
-                    "perc": perc,
-                    "duration": duration,
-                    "running": running,
-                    "elapsedTime": 0
-                }
-            }
-
-            # return Response(json.dumps(result), status=200, mimetype='text/javascript')
 
         result = {
             "success": 200,
@@ -138,7 +147,7 @@ def cpu_load(perc, duration, core_num=-1):
                 "perc": perc,
                 "duration": duration,
                 "running": running,
-                "elapsedTime": round(time()) - running_start
+                "elapsedTime": elapsed_time
             }
         }
 
@@ -160,14 +169,20 @@ def run_cpu_load(percent, duration, core_num=-1):
 
     try:
 
-        print("Start", percent, duration, core_num)
-
         running = True
+
+        print("Started")
+
+        start_time = round(time())
 
         if core_num != -1:
             load_single_core(core_num=core_num, duration_s=duration, target_load=percent)  # generate load on single core (0)
         else:
             load_all_cores(duration_s=duration, target_load=percent)
+
+        end_time = time() - start_time
+
+        print("End time: ", end_time)
 
         running = False
         running_start = 0
@@ -182,6 +197,7 @@ def run_cpu_load(percent, duration, core_num=-1):
 
 def run_cpu_load_preset(preset_data):
 
+    global current_preset_id
     global running_start
     global running_end
     global running
@@ -190,22 +206,31 @@ def run_cpu_load_preset(preset_data):
 
         running = True
 
-        print("Start All")
+        print("Start All", preset_data)
+
+        start_time = round(time())
+
+        current_preset_id = 0
 
         for preset in preset_data:
+            preset_percent = round(preset['perc'], 3)
+            preset_time = round(preset['time'])
 
-            percent = round(preset['perc']/100, 3)
-            duration = round(preset['time'])
+            print("Preset", preset_percent, preset_time)
 
-            print("Preset", percent, duration)
+            load_all_cores(duration_s=preset_time, target_load=preset_percent)
 
-            load_all_cores(duration_s=duration, target_load=percent)
+            current_preset_id += 1
+
+        end_time = time() - start_time
 
         running = False
         running_start = 0
         running_end = 0
 
-        print("End")
+        current_preset_id = 0
+
+        print("End time: ", end_time)
 
     except Exception as err:
         print(err)

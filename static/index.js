@@ -6,6 +6,8 @@ let coresValue = numCores; //document.getElementById("cores").value;
 let percValue = document.getElementById("perc").value;
 let durationValue = document.getElementById("duration").value;
 let intervalId = 0;
+let currentPresetId = -1;
+let checkIntervalId = 0;
 
 loadSimulation(
     () => {
@@ -15,9 +17,6 @@ loadSimulation(
     },
     true
 );
-
-
-// console.log(running, runningStart, runningEnd);
 
 onChangePercentual();
 onChangeDuration();
@@ -29,59 +28,45 @@ function loadSimulationPreset(callBack = null, check = false) {
     percValue = document.getElementById("perc").value;
     durationValue = document.getElementById("duration").value;
 
-    const loadDataPoints = getLoadsFromPoints(durationValue);
-    const data = JSON.stringify(loadDataPoints);
+    const preset = getLoadsFromPoints(durationValue);
+    const data = JSON.stringify(
+        {
+            preset: preset,
+            duration: durationValue
+        }
+    );
 
     var xhr = new XMLHttpRequest();
     xhr.withCredentials = true;
 
     xhr.addEventListener("readystatechange", function() {
-      if(this.readyState === 4) {
-        console.log(this.responseText);
-      }
+        if (this.readyState === 4) {
+
+            responseBody = JSON.parse(xhr.responseText)['body'];
+
+            document.getElementById("cores").value = responseBody['cores'];
+            document.getElementById("perc").value = responseBody['perc'];
+            document.getElementById("duration").value = responseBody['duration'];
+
+            onChangePercentual();
+            onChangeDuration();
+            onChangeCores();
+
+            coresValue = document.getElementById("cores").value;
+            percValue = document.getElementById("perc").value;
+            durationValue = document.getElementById("duration").value;
+            running = responseBody['running'];
+
+            if (callBack) {
+                callBack();
+            }
+        }
     });
 
     xhr.open("POST", "/api/cpu-load/preset/");
     xhr.setRequestHeader("Content-Type", "application/json");
 
     xhr.send(data);
-/*
-    var xhr = new XMLHttpRequest();
-    xhr.withCredentials = true;
-
-    xhr.addEventListener("readystatechange", (data) => {
-      if(xhr.readyState === 4) {
-        // console.log(data);
-        responseBody = JSON.parse(xhr.responseText)['body'];
-
-        document.getElementById("cores").value = responseBody['cores'];
-        document.getElementById("perc").value = responseBody['perc'];
-        document.getElementById("duration").value = responseBody['duration'];
-        // console.log("responseBody", responseBody)
-
-        onChangePercentual();
-        onChangeDuration();
-        onChangeCores();
-
-        coresValue = document.getElementById("cores").value;
-        percValue = document.getElementById("perc").value;
-        durationValue = document.getElementById("duration").value;
-        running = responseBody['running'];
-
-        if (callBack) {
-            callBack();
-        }
-      }
-    });
-
-    let url = `/api/cpu-load/perc/${percValue}/duration/${durationValue}`;
-    if (check) {
-        url = `/api/cpu-load/check`;
-    }
-    xhr.open("GET", url);
-
-    xhr.send();
-    */
 }
 
 function loadSimulation(callBack = null, check = false) {
@@ -95,13 +80,12 @@ function loadSimulation(callBack = null, check = false) {
 
     xhr.addEventListener("readystatechange", (data) => {
       if(xhr.readyState === 4) {
-        // console.log(data);
+
         responseBody = JSON.parse(xhr.responseText)['body'];
 
         document.getElementById("cores").value = responseBody['cores'];
         document.getElementById("perc").value = responseBody['perc'];
         document.getElementById("duration").value = responseBody['duration'];
-        // console.log("responseBody", responseBody)
 
         onChangePercentual();
         onChangeDuration();
@@ -111,6 +95,7 @@ function loadSimulation(callBack = null, check = false) {
         percValue = document.getElementById("perc").value;
         durationValue = document.getElementById("duration").value;
         running = responseBody['running'];
+        currentPresetId = responseBody['currentPresetId'];
 
         if (callBack) {
             callBack();
@@ -130,29 +115,31 @@ function loadSimulation(callBack = null, check = false) {
 }
 
 function runSimulationPreset() {
-    responseBody = loadSimulationPreset();
+    // loadSimulationPreset(canvasUpdateProgress);
+    loadSimulationPreset();
+
+    checkIntervalId = setInterval(
+        () => {
+
+            loadSimulation(
+                () => {
+
+                    if (currentPresetId == 9) {
+                        currentPresetId = 0;
+                        clearInterval(checkIntervalId);
+                    }
+                    redrawAll();
+                },
+                true
+            );
+        },
+        1000
+    );
+
 }
 
 function runSimulation() {
-    responseBody = loadSimulation(updateProgress);
-//
-//    var xhr = new XMLHttpRequest();
-//    xhr.withCredentials = true;
-//
-//    xhr.addEventListener("readystatechange", (data) => {
-//      if(xhr.readyState === 4) {
-//        // console.log(data);
-//        responseBody = JSON.parse(xhr.responseText);
-//        // console.log(responseBody);
-//      }
-//    });
-//
-//    const url = `/api/cpu-load/cores/${coresValue}/perc/${percValue}/duration/${durationValue}`;
-//    xhr.open("GET", url);
-//
-//    xhr.send();
-
-    // updateProgress();
+    loadSimulation(updateProgress);
 }
 
 function updateProgress() {
@@ -162,25 +149,8 @@ function updateProgress() {
     document.getElementById('duration').disabled = running;
     document.getElementById('cores').disabled = running;
     clearInterval(intervalId);
-//
-//    now = new Date().getTime();
-//
-//    if (!running) {
-//        runningStart = now;
-//    }
-//
-//    runningEnd = now + Number(durationValue);
-//
-//    // console.log("now", now);
-//    // console.log("runningStart", runningStart);
-//    timePassed = now - runningStart;
-//
-//
-//    // console.log("timePassed", timePassed);
 
     timePassed = Number(responseBody['elapsedTime']);
-    // console.log('responseBody:', responseBody)
-    // console.log('timePassed:', timePassed)
 
     coresValue = document.getElementById("cores").value;
     percValue = document.getElementById("perc").value;
@@ -191,9 +161,7 @@ function updateProgress() {
             timePassed++;
             let progressPerc = Math.round(timePassed / (durationValue) * 100);
             document.getElementsByClassName('progress-bar')[0].style.width = `${progressPerc}%`;
-            // console.log("timePassed", timePassed);
-            // console.log("durationValue", durationValue);
-            // console.log("progressPerc", progressPerc);
+
             if (progressPerc >= 100) {
                 clearInterval(intervalId);
 

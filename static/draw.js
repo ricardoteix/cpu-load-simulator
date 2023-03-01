@@ -6,6 +6,8 @@ let radius, mouseY, mouseX, canvasRect;
 let controlPoints = [];
 let storageControlPoints = localStorage.getItem("controlPoints");
 let maxPoints = 10;
+let multipleLoadInProgress = false;
+let canvasUpdateProgressId = 0;
 
 window.addEventListener('load', initDraw);
 
@@ -23,7 +25,6 @@ function initDraw() {
     canvas.addEventListener('mousemove', onMouseMoveCanvas, false);
     canvas.addEventListener('click', onClickCanvas, false);
 
-    console.log(canvasFather.clientWidth, canvasFather.clientHeight)
     canvasRect = canvas.getBoundingClientRect();
 
     radius = 5;
@@ -40,6 +41,46 @@ function initDraw() {
     }
 
     redrawAll();
+}
+
+function canvasUpdateProgress() {
+    multipleLoadInProgress = true;
+    let progressTime = 0;
+    let progressX = 20;
+    let oldTime = new Date().getTime();
+    let millis = durationValue * 1000;
+    const firstControlPoint = controlPoints[0];
+    const lastControlPoint = controlPoints[controlPoints.length - 1];
+    const xDelta = lastControlPoint.x - firstControlPoint.x + 40;
+    const pxPerMillis = xDelta / millis;
+    const timePerPoint = durationValue / maxPoints;
+    canvasUpdateProgressId = setInterval(
+        () => {
+            progressTime = ((new Date().getTime()) - oldTime);
+
+            if (progressTime >= durationValue * 1000) {
+                clearInterval(canvasUpdateProgressId);
+                multipleLoadInProgress = false;
+                return;
+            }
+
+            progressX = 20 + (pxPerMillis * progressTime);
+            const currentPointId = Math.floor((progressTime/1000)/timePerPoint);
+            const currentPoint = controlPoints[currentPointId];
+            let nextPoint = currentPoint;
+            if (currentPointId < controlPoints.length - 1) {
+                nextPoint = controlPoints[currentPointId + 1];
+            }
+            const yPogressDelta = nextPoint.y - currentPoint.y;
+            const xPogressDelta = nextPoint.x - currentPoint.x;
+            const perc =  ((progressTime/1000) - (currentPointId * timePerPoint))/timePerPoint; //(progressTime) / (durationValue * 1000);
+            const progressY = currentPoint.y + (perc * yPogressDelta);
+
+            redrawAll();
+            drawReferenceLine(progressX, progressY, false);
+        },
+        1
+    );
 }
 
 function savePoints() {
@@ -116,10 +157,31 @@ function addText(text, x, y, fontSize, textAlign="left") {
     context.fill();
 }
 
-function drawReferenceLine() {
+function drawReferenceLine(px = mouseX, py = mouseY, disable = true) {
+
+    if (disable) {
+        return;
+    }
+
     if (!canvas.getContext) {
         return;
     }
+
+    const currentPointValues = getPointValues(
+        {
+            x: px,
+            y: py
+        }
+    );
+
+    cursorTextAlign = "right";
+    cursorTextPosX = px - 8;
+    if (px < 50) {
+        cursorTextPosX = px + 8;
+        cursorTextAlign = "left";
+    }
+    addText(`${currentPointValues.perc}%`, cursorTextPosX, py - 5, 11, cursorTextAlign);
+    addText(`${currentPointValues.time}s`, cursorTextPosX, py + 15, 11, cursorTextAlign);
 
     let strokeStyle = 'grey';
     context.lineWidth = 1;
@@ -128,8 +190,8 @@ function drawReferenceLine() {
 
     for (let i = 0; i < controlPoints.length; i++) {
         const controlPoint = controlPoints[i];
-        if (mouseX > controlPoint.x - 5 && mouseX < controlPoint.x + 5 &&
-            mouseY < canvas.height - 20) {
+        if (px > controlPoint.x - 5 && px < controlPoint.x + 5 &&
+            py < canvas.height - 20) {
             strokeStyle = 'green';
             context.lineWidth = 2;
             break;
@@ -139,20 +201,22 @@ function drawReferenceLine() {
     context.strokeStyle = strokeStyle;
 
     context.beginPath();
-    context.moveTo(mouseX, 0);
-    context.lineTo(mouseX, canvas.height);
+    context.moveTo(px, 0);
+    context.lineTo(px, canvas.height);
 
-    context.moveTo(0, mouseY);
-    context.lineTo(canvas.width, mouseY);
+    context.moveTo(0, py);
+    context.lineTo(canvas.width, py);
     context.stroke();
 
 }
 
-function drawControlPoint(x, y, strokeStyle="red", fillStyle="red") {
+function drawControlPoint(x, y, strokeStyle="red", fillStyle="red", radius = 5) {
     context.beginPath();
     context.arc(x, y, radius, 0, 2 * Math.PI);
-    context.fillStyle = fillStyle;
-    context.fill();
+    if (fillStyle != "") {
+        context.fillStyle = fillStyle;
+        context.fill();
+    }
     context.strokeStyle = strokeStyle;
     context.stroke();
 }
@@ -277,26 +341,21 @@ function getPointValues(point) {
 function redrawAll() {
     clearDraw();
 
+    for(let i = 0; i <= currentPresetId && currentPresetId >= 0; i++) {
+        const currentPoint = controlPoints[i];
+        drawControlPoint(
+            currentPoint.x,
+            currentPoint.y,
+            strokeStyle="blue",
+            fillStyle="",
+            radius = 10
+        );
+    }
+
     addText("CPU 100%", 24, 15, 11);
     addText("CPU atual", 24, canvas.height - 30, 11);
     addText("t0", 25, canvas.height - 4, 14);
     addText("tf", canvas.width - 40, canvas.height - 4, 14);
-
-    const currentPointValues = getPointValues(
-        {
-            x: mouseX,
-            y: mouseY
-        }
-    );
-
-    cursorTextAlign = "right";
-    cursorTextPosX = mouseX - 8;
-    if (mouseX < 50) {
-        cursorTextPosX = mouseX + 8;
-        cursorTextAlign = "left";
-    }
-    addText(`${currentPointValues.perc}%`, cursorTextPosX, mouseY - 5, 11, cursorTextAlign);
-    addText(`${currentPointValues.time}s`, cursorTextPosX, mouseY + 15, 11, cursorTextAlign);
 
     drawLine(0, (canvas.height) - 20, canvas.width, (canvas.height) - 20);
     drawLine(20, 0, 20, canvas.height);
@@ -309,7 +368,7 @@ function redrawAll() {
         }
     }
 
-    drawReferenceLine();
+    drawReferenceLine(mouseX, mouseY, multipleLoadInProgress);
 }
 
 function clearDraw() {
@@ -333,7 +392,7 @@ function getLoadsFromPoints(durationValue) {
 
         loads.push(
             {
-                perc: currentPointValues.perc,
+                perc: currentPointValues.perc/100,
                 time: durationValue / maxPoints
             }
         );
