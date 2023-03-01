@@ -122,5 +122,16 @@ O valor padrão -1 indica que todos os cores serão estressados.
 - running: um booleano que indica se o processo ainda está sendo execurado.
 - elapsedTime: quanto tempo se passou desde o início do processo.
 
+# Considerações sobre o projeto
+
+- A carga na cpu é realizada pelo módulo Python 
+``cpu-load-generator``.
+- O módulo não é preciso, portanto, o valor da CPU pode não ficar
+fixo no percentual desejado durante o tempo de execução, mas
+num valor aproximado.
+- O tempo também pode divergir. Nos testes realizados o tempo 
+de execução da carga foi um pouco maior do que o solicitado,
+principalmente na carga múltipla.
+
 # Imagem da Interface
 ![Tela do software](https://github.com/ricardoteix/cpu-load-simulator/raw/main/assets/web_interface.jpg)
