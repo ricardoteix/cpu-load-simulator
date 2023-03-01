@@ -123,4 +123,4 @@ O valor padrão -1 indica que todos os cores serão estressados.
 - elapsedTime: quanto tempo se passou desde o início do processo.
 
 # Imagem da Interface
-![Tela do software](https://github.com/ricardoteix/cpu-load-simulator/blob/master/assets/web_interface.jpg?raw=true)
+![Tela do software](https://github.com/ricardoteix/cpu-load-simulator/raw/main/assets/web_interface.jpg)
