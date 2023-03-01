@@ -88,7 +88,7 @@ O retorno destes endpoints contém um objeto como no exemplo a seguir:
 ```
 
 
-## Endpoint check:
+## Endpoint cpu-load check:
 
 Enquanto o processo de estressar a CPU estiver ativo, é possível
 realizar uma requisição no neste endpoint para saber o status.
