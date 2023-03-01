@@ -1,25 +1,77 @@
-const canvas = document.getElementById("canvas");
-const context = canvas.getContext("2d");
+let canvas;
+let context;
 
-canvas.addEventListener('mousemove', onMouseMoveCanvas, false);
-canvas.addEventListener('click', onClickCanvas, false);
-
-let radius = 5;
-let mouseX = 0;
-let mouseY = 0;
-let canvasRect = canvas.getBoundingClientRect();
+let radius, mouseY, mouseX, canvasRect;
 
 let controlPoints = [];
-const storageControlPoints = localStorage.getItem("controlPoints");
-const maxPoints = 20;
+let storageControlPoints = localStorage.getItem("controlPoints");
+let maxPoints = 10;
 
-if (storageControlPoints != null && storageControlPoints != "[]") {
-    controlPoints = JSON.parse(storageControlPoints);
-} else {
-    redefinePoints();
+window.addEventListener('load', initDraw);
+
+function initDraw() {
+
+    let canvasFather = document.getElementById("canvasFather");
+    canvas = document.createElement('canvas');
+    context = canvas.getContext("2d");
+    canvas.id = "canvas";
+
+    canvasFather.appendChild(canvas);
+    canvas.width = canvasFather.clientWidth;
+    canvas.height = 300;
+
+    canvas.addEventListener('mousemove', onMouseMoveCanvas, false);
+    canvas.addEventListener('click', onClickCanvas, false);
+
+    console.log(canvasFather.clientWidth, canvasFather.clientHeight)
+    canvasRect = canvas.getBoundingClientRect();
+
+    radius = 5;
+    mouseX = 0;
+    mouseY = 0;
+
+    controlPoints = [];
+    storageControlPoints = localStorage.getItem("controlPoints");
+
+    if (storageControlPoints != null && storageControlPoints != "[]") {
+        controlPoints = JSON.parse(storageControlPoints);
+    } else {
+        redefinePoints();
+    }
+
+    redrawAll();
 }
 
-redrawAll();
+function savePoints() {
+    const jsonData = JSON.stringify(controlPoints)
+    download(jsonData, 'pontos.json', 'text/plain');
+}
+
+function loadPoints() {
+    const openFile = document.getElementById('openFile');
+    const fileUrl = URL.createObjectURL(openFile.files[0]);
+    const xmlHttp = new XMLHttpRequest();
+    xmlHttp.open( "GET", fileUrl, false );
+    xmlHttp.send( null );
+    xmlHttp.responseText;
+
+
+    if (xmlHttp.responseText != null && xmlHttp.responseText != "[]") {
+        controlPoints = JSON.parse(xmlHttp.responseText);
+        openFile.value = null;
+        onMouseMoveCanvas({ clientX: 0, clientY: 0});
+    } else {
+        redefinePoints();
+    }
+}
+
+function download(content, fileName, contentType) {
+    var a = document.createElement("a");
+    var file = new Blob([content], {type: contentType});
+    a.href = URL.createObjectURL(file);
+    a.download = fileName;
+    a.click();
+}
 
 function redefinePoints() {
     for (let i = 0; i < maxPoints; i++) {
@@ -135,7 +187,6 @@ function addControlPoint(x, y, initial = false) {
     if (controlPoints.length > 0 &&
         x < controlPoints[controlPoints.length - 1].x +
             canvas.width * 0.1) {
-        // alert("Ponto muito próximo do anterior ou antes do último.");
         Swal.fire(
             {
               title: 'Atenção!',
@@ -149,7 +200,6 @@ function addControlPoint(x, y, initial = false) {
 
 
     if (!initial && controlPoints.length >= 10) {
-        // alert("Só pode ter no máximo 10 pontos.");
         Swal.fire(
             {
               title: 'Atenção!',

@@ -45,7 +45,7 @@
                                    step="10" value="{{ duration }}" class="form-control" id="duration">
                         </div>
 
-                        <button onclick="runSimulation()" type="button" id="simulate" class="btn btn-primary">Gerar simples</button>
+                        <button onclick="runSimulation()" type="button" id="simulate" class="btn btn-primary">Carga simples</button>
                     </form>
                     <div class="mt-3">
                         <div class="column">
@@ -57,24 +57,43 @@
                 </div>
             </div>
         </div>
-        <div class="container mt-5">
-            <div class="row justify-content-around mt-5">
+        <hr>
+        <div class="container mt-3">
+            <div class="row justify-content-around mt-3">
+                <div class="col-6 d-flex">
+
+                    <button onclick="savePoints()"
+                            type="button"
+                            id="save" class="btn btn-secondary"
+                            style="margin-right: 3px;">
+                        Salvar
+                    </button>
+                    <div class="vr" style="margin-right: 3px;"></div>
+                    <input type="file" accept=".json" id="openFile" class="form-control"
+                            style="margin-right: 3px;">
+                    <button onclick="loadPoints()" type="button"
+                            id="open" class="btn btn-secondary"
+                            style="margin-right: 10px;">
+                        Abrir
+                    </button>
+                </div>
+            </div>
+            <div class="row justify-content-around mt-3">
                 <div class="col-6">
-                    <div class="column">
-                        <canvas id="canvas" height="300" width="500" >
-                        </canvas>
+                    <div class="column" id="canvasFather">
+
                     </div>
                 </div>
             </div>
-            <div class="row justify-content-around mt-5">
+            <div class="row justify-content-around mt-3">
                 <div class="col-6">
                     <button onclick="runSimulationPreset()" type="button"
                             id="simulatePreset" class="btn btn-primary">
-                        Gerar múltiplo
+                        Carga múltipla
                     </button>
                     <button onclick="removeAllPoints()" type="button"
                             id="removeAll" class="btn btn-danger">
-                        Gerar múltiplo
+                        Redefinir
                     </button>
                 </div>
             </div>
