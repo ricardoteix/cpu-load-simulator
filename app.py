@@ -1,14 +1,14 @@
-from flask import Flask, render_template, Response, request
+from flask import Flask, render_template, Response
 from threading import Thread
 from cpu_load_generator import load_single_core, load_all_cores, from_profile
 
 import os
 import json
-from time import time, sleep
+from time import time
 import multiprocessing
 from urllib.request import urlopen
 
-from body import Body
+from src.body import Body
 
 app = Flask(__name__, static_url_path='')
 app.secret_key = os.urandom(42)
@@ -219,6 +219,7 @@ def run_cpu_load_preset(preset_data):
             print("Preset", preset_percent, preset_time)
 
             load_all_cores(duration_s=preset_time, target_load=preset_percent)
+            from_profile
 
             current_preset_id += 1
 

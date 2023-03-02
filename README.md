@@ -16,7 +16,14 @@ checar a simulação.
 
 # Uso
 
-Para usar este código é preciso ter instalado o Python 3.7 ou 
+O uso pode ser feito de duas formas. Com e sem Docker.
+
+Para ambos os casos a porta 5000 deve estar liberada para acessar
+a aplicação.
+
+## Sem Docker
+
+Para usar desta forma é preciso ter instalado o Python 3.7 ou 
 superior com PIP.
 
 Após instalar o Python e o PIP instale execute o comando na pasta 
@@ -32,8 +39,29 @@ Após a instalação exeucute com Python o arquivo **app.py**.
 python app.py
 ```
 
-Após isso basta acessar o IP da instância via navegador ou realizar as 
+Agora basta acessar o IP da instância via navegador ou realizar as 
 requisições HTTP.
+
+## Com Docker
+
+É necessário ter o Docker instalado na máquina. 
+
+Após instalar o docker execute os comandos a seguir:
+
+Criando a imagem
+
+``docker build --tag cpuload .``
+
+Executando um container com a imagem
+
+``docker run -p 5000:5000 cpuload``
+
+Se preferir pode instalar o docker-compose e usar um comando único:
+
+`` docker-compose up --build``
+
+A partir deste ponto, basta acessar o IP da instância via 
+navegador ou realizar as requisições HTTP.
 
 ## Interface Web
 

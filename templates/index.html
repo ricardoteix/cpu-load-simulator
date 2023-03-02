@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <title>CPU Load Simulator</title>
-
+        <link rel="icon" type="image/x-icon" href="{{url_for('static', filename='favicon.ico')}}">
         <script>
             let running = "{{ running }}" == "True";
             let runningStart = Math.floor(Number("{{ running_start }}"));

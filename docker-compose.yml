@@ -1,0 +1,19 @@
+version: '2'
+
+services:
+
+    python-cpu-load:
+        image: cpu-load
+        container_name: cpuload
+        build: .
+        ports:
+            - 5000:5000
+        environment:
+            - PORT=5000
+        networks:
+            - code-network
+        restart: always
+
+networks:
+    code-network:
+        driver: bridge
